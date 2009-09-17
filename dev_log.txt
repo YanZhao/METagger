@@ -1,0 +1,31 @@
+options:
+* -d 1, to give debug outpt, default is 0
+* -m mwu, to indicate whether to use Multi Word unit or not default is use number tag
+
+* -d 0, single best output, it will output result file new_test_me_fb_{0,20..}, and evaluation result is written to the STDERR.
+* -d 1, N-best path output, this option does't produce output, you can see the differnt ratio in STDERR. If you want to produce a result file, you need to see the threshod_value in previous STDERR, and use -v threshod_value, at the same time, use -tst( it means that the model has been produce) and use -i 20 to specify the certain model. 
+* -d 2,  Forward-backward method based on ME (no context information)  
+* -d 3, Forward-backward method based on combined model (no context information)
+* -d 4, Forward-backward method based on ME (with context information), you also need change template file to t3_context
+* -d 5, Forward-backward method based on combined model (with context information), you also need change template file to t3_context
+
+2009 04 28
+I create the server and train model on large_corpus. by now, I still don't know what will happen. :)
+In LBFGS_Estimate_C function, I change the intervane saving model 
+ // if ((j + 1) % 20 == 0 && g_syn_flag == 1)
+I change it from 20 to 5. It means that I need to store it very 5 times. It still need very long time 
+2009 05 28
+******************************************************************************************************
+I add g_mwu gloabal variable to control the function MWUTool::legal_transition or MWUTool::legal_transition_no
+, you only need to change g_mwu to decide which corpus do you want to use. ok
+******************************************************************************************
+* I also finish training tag format hmm training. it is in the ~/PosTagger/Construct/Large_Tag.
+
+large_train_corpus has 214802503 lines . 
+
+
+2009 06 17
+nearly two months pass, I need to summarize my software now. I should rewrite it make it a little more clearly
+* I add template filter , in your template file, you should add number after template, such as 
+1:[-1,0] 3 ,it means any feature based on template 1 should be greater than 3, greater, not include equal.
+
