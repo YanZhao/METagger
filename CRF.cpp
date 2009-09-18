@@ -1,4 +1,4 @@
-added in malouf branch,this is good ,
+add from temp in malouf branch.:)
 /***************************************************************************
  *   Copyright (C) 2008 by Yan Zhao   *
  *   yzhao@holde   *
