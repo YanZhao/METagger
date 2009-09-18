@@ -2321,6 +2321,101 @@ int CPosMaxEn::FB_FilterFile(string strFileName, int AFileIndex)
 	return line;
 }
 
+int CPosMaxEn::OutputForMalouf()
+{
+	vector< vector< string> > malouf;
+	malouf.resize(m_numTag);
+	
+	EVENT mCurEvent;
+	m_EventList.OpenEventList(OpenMode_Read);
+	fstream f1;
+	f1.open("malouf",ios::out);
+
+	while (m_EventList.ReadEvent(mCurEvent) == true)
+	{	//f1<<m_numTag<<endl;
+		string a = OutputMalouf(mCurEvent);
+		f1<<a;
+		malouf[mCurEvent.outTag].push_back(a);
+	}
+	m_EventList.CloseEventList();
+
+/*	fstream f1;
+	f1.open("malouf",ios::out);
+
+	for(int i = 0;i<m_numTag;i++)
+	{
+		f1<< malouf[i].size()<<endl;;
+		for(int j = 0;j<malouf[i].size();j++)
+		{
+			f1<< malouf[i][j]<<endl;
+		}
+	}*/
+	f1.close();
+}
+string CPosMaxEn::OutputMalouf(EVENT & event)
+{
+	string result,temp ;
+	result = "";
+	temp = "";
+	int sum = 0;
+	int sumPos = 0;
+	for(int k = 0;k<m_numTag;k++)
+	{
+		sum = 0;
+		temp = "";
+		if(k != event.outTag)
+		{
+			temp+="0 ";
+		}
+		else
+		{
+			temp+="1 ";
+		}
+			string linetemp = "";
+			for(int i = 0;i<event.vectIndexPredicate.size();i++)
+			{			
+				PREDICATE & mCurPredicate = m_vectPredicates[event.vectIndexPredicate[i]];  
+	
+				vector<pair<int,int> >::iterator s1_Iter = mCurPredicate.indexFeature.begin();
+				
+				while(s1_Iter != mCurPredicate.indexFeature.end())
+				{	
+					//pair<int,int> pValue = *s1_Iter;
+					if(s1_Iter->first == k)
+					{
+						char buffer[20];
+						sprintf(buffer, "%d", s1_Iter->second);
+						string key(buffer);
+						linetemp += key;
+						linetemp += " 1 ";
+						sum ++;
+					}
+					s1_Iter++;
+				}
+				//
+			}
+			if(sum >0)
+			{
+				char buffer[20];
+				sprintf(buffer, "%d", sum);
+				string key(buffer);
+				temp +=key;
+				temp +=" ";
+				temp += linetemp;
+				result +=temp;
+				result +="\n";
+				sumPos++;
+			}
+	}
+	char buffer[20];
+	sprintf(buffer, "%d", sumPos);
+	string key(buffer);
+				
+	string last_result = key + "\n";
+	last_result += result; 
+	cout<<last_result<<endl;
+	return last_result;
+}
 
 int CPosMaxEn::TagFile(string strFileName, int AFileIndex)
 {

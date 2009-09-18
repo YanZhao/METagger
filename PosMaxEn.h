@@ -138,6 +138,8 @@ private:
 	int FillInTagMap(int lineNum);
 	bool IsValidFeature(int k);
 	int GetTagFromEvents();
+	string OutputMalouf(EVENT & event);
+	int OutputForMalouf();
 
 
 private:
