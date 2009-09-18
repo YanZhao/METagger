@@ -1,6 +1,3 @@
-add from temp in malouf branch.:)
-add form metagger in malouf branch. :):)
-add from temp in malouf branch again:):):)
 /***************************************************************************
  *   Copyright (C) 2008 by Yan Zhao   *
  *   yzhao@holde   *
