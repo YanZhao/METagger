@@ -204,6 +204,8 @@ inline istream &operator>>(istream &In,FEATURE &cFeature)
 	return In;
 }
 
+extern int g_maxSenLen ;
+extern int g_maxPosList ;
 extern int g_decodingMethod;
 extern int g_flag_pos_options;
 extern int g_threshold;
@@ -265,7 +267,7 @@ extern hash_map<string,double,StrHashTrait<string> > g_hashProb;
 extern hash_map<string,double,StrHashTrait<string> > g_hashContextProb;
 extern vector<tag_Options> g_all_result;
 
-extern vector< vector<double> > g_grid;
+
 extern bool g_hmm ;
 extern string g_mwu;
 extern string g_TagIDMapFileName;

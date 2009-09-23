@@ -44,45 +44,35 @@ int g_2_sum=0;
 int g_3_right=0;
 int g_3_sum=0;
 
-vector< vector<double> > g_grid;
+
 vector< vector<double> > g_nor_grid;
 vector< vector<double> > g_nor_ME_grid;
+int g_maxSenLen = 1000;
+int g_maxPosList = 30;
 void InitGrid(void )
 {
-	g_grid.resize(1000);
-	for(int i = 0;i<1000;i++)
+	
+	g_nor_grid.resize(g_maxSenLen);
+	for(int i = 0;i<g_maxSenLen;i++)
 	{
-		g_grid[i].resize(30);
+		g_nor_grid[i].resize(g_maxPosList);
 	}
-	for(int i = 0;i<1000;i++)
+	for(int i = 0;i<g_maxSenLen;i++)
 	{
-		for(int j = 0 ;j<30;j++)
-		{
-			g_grid[i][j] = 0.0;
-		}
-	}
-
-	g_nor_grid.resize(1000);
-	for(int i = 0;i<1000;i++)
-	{
-		g_nor_grid[i].resize(30);
-	}
-	for(int i = 0;i<1000;i++)
-	{
-		for(int j = 0 ;j<30;j++)
+		for(int j = 0 ;j<g_maxPosList;j++)
 		{
 			g_nor_grid[i][j] = 0.0;
 		}
 	}
 
-	g_nor_ME_grid.resize(1000);
-	for(int i = 0;i<1000;i++)
+	g_nor_ME_grid.resize(g_maxSenLen);
+	for(int i = 0;i<g_maxSenLen;i++)
 	{
-		g_nor_ME_grid[i].resize(30);
+		g_nor_ME_grid[i].resize(g_maxPosList);
 	}
-	for(int i = 0;i<1000;i++)
+	for(int i = 0;i<g_maxSenLen;i++)
 	{
-		for(int j = 0 ;j<30;j++)
+		for(int j = 0 ;j<g_maxPosList;j++)
 		{
 			g_nor_ME_grid[i][j] = 0.0;
 		}
@@ -1131,6 +1121,8 @@ void TRELLIS::Combine()
 			//this is only HMM model here. so you must understand it now.
 			//double 	sum = g_nor_grid[col][row];
 			double 	sum = g_addLogProbabilities(g_nor_grid[col][row],g_nor_ME_grid[col][row]);
+			g_nor_grid[col][row] = 0.0;
+			g_nor_ME_grid[col][row] = 0.0;
 			t1->setForwardBackwardProbability(sum);
 			row ++;	
 		}

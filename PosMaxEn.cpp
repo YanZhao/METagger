@@ -1913,6 +1913,7 @@ int CPosMaxEn::FB_FilterFile(string strFileName, int AFileIndex)
 
 	VERIFY_FILE(fPosFile);
 	
+	InitGrid();
 
 	string strPosLine;
 	int line = 0;
@@ -1926,6 +1927,7 @@ int CPosMaxEn::FB_FilterFile(string strFileName, int AFileIndex)
 	double threshold_2 = 1.0;
 	double threshold_3 = 2.0;
 	double threshold_4 = 5.0;
+	int maxPosList = 0;
 	do
 	{
 		char chline[10000];
@@ -1966,7 +1968,17 @@ int CPosMaxEn::FB_FilterFile(string strFileName, int AFileIndex)
 				
 					vvTAGNODE tags;
 					FillInvvTAGNODE(tags,vect_sent);
-					InitGrid();
+					if(vect_sent.size()>g_maxSenLen)
+					{
+						g_maxSenLen = vect_sent.size()+2;
+						InitGrid();
+					}
+					if(maxPosList>g_maxPosList)
+					{
+						//2 has no special meaning, make it more safe
+						g_maxPosList = maxPosList+2;
+						InitGrid();
+					}
 					
 					if(g_combine == 1 )
 					{
@@ -2047,6 +2059,7 @@ int CPosMaxEn::FB_FilterFile(string strFileName, int AFileIndex)
 				}
 				sSentence = "";
 				vect_sent.clear();
+				maxPosList = 0;
 			}
 			//cerr<<word<<endl;
 			if(g_filter_value>-0.5)
@@ -2080,6 +2093,10 @@ int CPosMaxEn::FB_FilterFile(string strFileName, int AFileIndex)
 				{
 					cout<<"error in pos_options"<<endl;
 					exit(2);
+				}
+				if(vectline.size()>maxPosList)
+				{
+					maxPosList = vectline.size();
 				}
 				for(int i = 1;i<vectline.size();i++)
 				{	
