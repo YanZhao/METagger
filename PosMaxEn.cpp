@@ -312,8 +312,8 @@ void CPosMaxEn::ExtractEventFromWnd(SAMPLE * wnd[])
 
 double CPosMaxEn::FeatureModelExpecation(double & log_likelihood)
 {
-	double *pab = new double[m_numTag];
-    	int *corr = new int[m_numTag];  
+	double pab[m_numTag];
+    	int corr[m_numTag];  
     	int mPos=0, mNeg=0;
 	/////////////////////////////////////////////////////////////
 	
@@ -329,41 +329,32 @@ double CPosMaxEn::FeatureModelExpecation(double & log_likelihood)
 	int bi_array[m_numTag+10][10];
 	
 	//cout<<"beging to read each event"<<endl;
-	while (m_EventList.ReadEvent(mCurEvent) == true)
-	{
-		
-		for(int i= 0;i<m_numTag;i++)
+	for(int i= 0;i<m_numTag;i++)
 		{
-			pab[i] = 0.0f;
+			pab[i] = 1.0;
 			corr[i] = m_maxFeatureCount;
 		}
+	while (m_EventList.ReadEvent(mCurEvent) == true)
+	{
 		pos_vect.clear();
 		sumEvent++;
-		if(sumEvent%1000000 == 0)
+		
+		if(m_EventList.TotalEventCount()>1000000 && sumEvent% (m_EventList.TotalEventCount()/10) == 0)
 		{
-			//cout<< "Training event = "<<sumEvent<<endl;
+			cout<< "Training event = "<<sumEvent<<endl;
 		}
 
-		///////////
 		for(int i = 0;i<mCurEvent.vectIndexPredicate.size();i++)
 		{			
 			PREDICATE & mCurPredicate = m_vectPredicates[mCurEvent.vectIndexPredicate[i]];  //找到当前Predicate引用
-			/*for(int j = 0;j<m_numTag;j++)
-			{
-				if(mCurPredicate.indexFeature[j]!= -1)
-				{
-					corr[j]--;
-					pab[j] += m_vectFeatures[mCurPredicate.indexFeature[j]].alpha;
-				}
-			}*/
 			vector<pair<int,int> >::iterator s1_Iter = mCurPredicate.indexFeature.begin();
 			while(s1_Iter != mCurPredicate.indexFeature.end())
 			{	
-				//pair<int,int> pValue = *s1_Iter;
 				pab[s1_Iter->first]+=m_vectFeatures[s1_Iter->second].alpha;
 				if(corr[s1_Iter->first]==m_maxFeatureCount)
 				{
 					pos_vect.push_back(s1_Iter->first);
+					pab[s1_Iter->first]-=1.0;
 				}
 				bi_array[s1_Iter->first][m_maxFeatureCount-corr[s1_Iter->first]] = s1_Iter->second;
 				corr[s1_Iter->first]--;	
@@ -372,99 +363,34 @@ double CPosMaxEn::FeatureModelExpecation(double & log_likelihood)
 			//
 		}
 
-		/*bool zyflag = true;
+		///////////////
+		double psum = 0.0;
 		vector<int>::iterator it;
 		for(it=pos_vect.begin();it!=pos_vect.end();it++)
 		{
-			if(*it == mCurEvent.outTag)
-				zyflag = false;
-		}
-		if(zyflag)
-		{
-			pos_vect.push_back(mCurEvent.outTag);
-		}*/
-		
-
-		///////////////
-		double psum = 0.0f;
-		
-		//for(it=pos_vect.begin();it!=pos_vect.end();it++)
-		//don't give zero probability to one options!
-		for(int i= 0;i<m_numTag;i++)
-		{
-		//	int i = *it;
-			//if (m_maxFeatureCount != m_minFeatureCount) {pab[i] += m_correctFeatureAlfa * corr[i];}
+			int i = *it;
 			pab[i] = exp(pab[i]);
 			psum += pab[i];
 		}
+		psum += (m_numTag-pos_vect.size());
 		
-
-		if (psum > 0.0f)
-		{
-			//for(it=pos_vect.begin();it!=pos_vect.end();it++)
-			for(int i= 0;i<m_numTag;i++)
-			{
-			//	int i = *it;
-				pab[i] /= psum;
-			}
-		}
-
-		/*if(false)
-		//if(MWUTool::IsNotMWUBegingTag(IDToTag(mCurEvent.outTag)))
-		{
-			for(int i= 0;i<m_numTag;i++)
-			{
-				//int i = *it;
-				pab[i] =0;
-			}
-			pab[mCurEvent.outTag] = 1.0;
-		}*/
-
-		///////////////
-		//it=pos_vect.begin();
-		int b_oc = -1;
-		double b_pab = -1;
-
-		//for(it=pos_vect.begin();it!=pos_vect.end();it++)
-		for(int i= 0;i<m_numTag;i++)
-		{
-		//	int mIndex = *it;
-			int mIndex = i;
-			if (pab[mIndex] >= b_pab)
-			{
-				b_pab = pab[mIndex];
-				b_oc = mIndex;
-			}
-		}
-
-	
-		if (b_oc == mCurEvent.outTag)
-		{
-			mPos += 1;
-		}
-		else
-		{
-			mNeg += 1;
-		}
-
-		log_likelihood -= log(pab[mCurEvent.outTag]);
-		vector<int>::iterator it;
+		log_likelihood -= log(pab[mCurEvent.outTag]/psum);
+		
 		for(it=pos_vect.begin();it!=pos_vect.end();it++)
 		{
 			int k = *it;
 			for(int j = 0;j<(m_maxFeatureCount-corr[k]);j++)
 			{
 				int point = bi_array[k][j];
-				m_model_expectation[point] +=pab[k];
+				m_model_expectation[point] +=pab[k]/psum;
 			}
+			pab[k] = 1.0;
+			corr[k] = m_maxFeatureCount;
 		}
 	}
 	m_EventList.CloseEventList();
 
-	delete[] pab;
-	delete[] corr;
-
-	return (double) mPos / ((double) (mPos + mNeg));
+	return (double) 0 ;
 
 }
 
@@ -3539,12 +3465,15 @@ int CPosMaxEn::GetProbability_Based_All(vector<string>& vectIn ,int AIndex, SEQU
 	PREDICATE predicate;
 	int mLoc;
 	
-	vector<double>  vectProbability;
-	vectProbability.resize(m_numTag);	
+	//vector<double>  vectProbability;
+	//vectProbability.resize(m_numTag);	
 
 	double sum = 0.0f;
 	vector<double> prab;
-	prab.resize(m_numTag,0.0);
+	vector<int> corr;
+	vector<int> pos_vect;
+	prab.resize(m_numTag,1.0);
+	corr.resize(m_numTag,10);
 	//prab.assign(m_numTag,0.0);
 
 	for(int i = 0;i<m_templateVect.size();i++)
@@ -3560,13 +3489,22 @@ int CPosMaxEn::GetProbability_Based_All(vector<string>& vectIn ,int AIndex, SEQU
 				while(s1_Iter != mCurPredicate.indexFeature.end())
 				{	
 					prab[s1_Iter->first]+=m_vectFeatures[s1_Iter->second].alpha;
+					if(corr[s1_Iter->first]==10)
+					{
+						pos_vect.push_back(s1_Iter->first);
+						prab[s1_Iter->first]-=1.0;
+					}
+					corr[s1_Iter->first]--;	
 					s1_Iter++;
 				}
+
+				
+
 			}
 		}
 	}
 
-	for(int i = 0;i<m_numTag;i++)
+/*	for(int i = 0;i<m_numTag;i++)
 	{
 		prab[i] = exp(prab[i]);
 		sum+=prab[i];
@@ -3574,12 +3512,23 @@ int CPosMaxEn::GetProbability_Based_All(vector<string>& vectIn ,int AIndex, SEQU
 	for(int i = 0;i<m_numTag;i++)
 	{
 		vectProbability[i] = prab[i]/sum;
+	}*/
+	double psum = 0.0f;
+	vector<int>::iterator it;
+	for(it=pos_vect.begin();it!=pos_vect.end();it++)
+	{
+		int i = *it;
+		prab[i] = exp(prab[i]);
+		psum += prab[i];
 	}
+	psum += (m_numTag-pos_vect.size());
+
 
 	//return the result back;
 	for(int i = 0;i<vectPOS.size();i++)
 	{
-		vectProbability_options.push_back(vectProbability[vectPOS[i]]);
+		//vectProbability_options.push_back(vectProbability[vectPOS[i]]);
+		vectProbability_options.push_back(prab[vectPOS[i]]/psum);
 	}
 }
 
@@ -3598,18 +3547,12 @@ int CPosMaxEn::GetProbability_Based_All_Context(vector<string>& vectIn ,int AInd
 
 	PREDICATE predicate;
 	int mLoc;
-	
-	vector<double>  vectProbability;
-	vectProbability.resize(m_numTag);	
 
 	double sum = 0.0f;
-	vector<double> prab;
-	prab.resize(m_numTag,0.0);
-	vector<int> corr;
-	corr.resize(m_numTag,m_maxFeatureCount);
-	vector<int> pos_vect;
-	//prab.assign(m_numTag,0.0);
-	
+	vector<double> prab (m_numTag,1.0);
+	vector<int> corr (m_numTag,20);
+	vector<int> pos_vect ;
+
 	for(int i = 0;i<m_templateVect.size();i++)
 	{
 		predicate.predData = "";
@@ -3623,31 +3566,42 @@ int CPosMaxEn::GetProbability_Based_All_Context(vector<string>& vectIn ,int AInd
 				while(s1_Iter != mCurPredicate.indexFeature.end())
 				{	
 					prab[s1_Iter->first]+=m_vectFeatures[s1_Iter->second].alpha;
-					if(corr[s1_Iter->first]==m_maxFeatureCount)
+					if(corr[s1_Iter->first]==20)
 					{
 						pos_vect.push_back(s1_Iter->first);
+						prab[s1_Iter->first]-=1.0;
 					}
 					corr[s1_Iter->first]--;	
 					s1_Iter++;
 				}
+
+				
+
 			}
 		}
 	}
 
-	/*bool zyflag = true;
+	double psum = 0.0f;
+	vector<int>::iterator it;
+	for(it=pos_vect.begin();it!=pos_vect.end();it++)
+	{
+		int i = *it;
+		prab[i] = exp(prab[i]);
+		psum += prab[i];
+	}
+	psum += (m_numTag-pos_vect.size());
+
+
+	//return the result back;
 	for(int i = 0;i<vectPOS.size();i++)
 	{
-		zyflag = true;
-		for (int j = 0;j<pos_vect.size();j++)
-		{
-			if(pos_vect[j] == vectPOS[i])
-				zyflag = false;
-		}
-		if(zyflag)
-		{
-			pos_vect.push_back(vectPOS[i]);
-		}
-	}*/	
+		vectProbability_options.push_back(prab[vectPOS[i]]/psum);
+	}
+	
+
+	
+
+	/*
 	vector<int>::iterator it;
 	//for(it=pos_vect.begin();it!=pos_vect.end();it++)
 	for(int i = 0;i<m_numTag;i++)
@@ -3667,7 +3621,7 @@ int CPosMaxEn::GetProbability_Based_All_Context(vector<string>& vectIn ,int AInd
 	for(int i = 0;i<vectPOS.size();i++)
 	{
 		vectProbability_options.push_back(vectProbability[vectPOS[i]]);
-	}
+	}*/
 }
 
 
