@@ -1536,10 +1536,18 @@ void TRELLIS::keepGoodTags(double margin,map<int,int> & gold,int& right,int& sum
 			{
 				right++;	
 			}
+			//that means that threshold is zero. only keep the best one.
 			if(margin<0.0001)
 			{
-				index++;
-				continue;
+				//index++;
+				//continue;
+				for(t = t+1 ; t!=vi->end() ; ++t)
+				{
+					if(!(t->markedAsDeleted()))
+					{
+						t->markAsDeleted();
+					}
+				}
 			}
 
 			double bestPlusMargin = t->getForwardBackwardProbability() + margin;
